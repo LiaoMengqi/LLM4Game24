@@ -10,9 +10,8 @@
 
 ## 微调数据数据生成
 
-生成的数据存放在`data`文件夹下。
-
-如果需要重新生成数据可以依次运行以下命令
+我们已经生成数据，这部分可以跳过，生成的数据存放在`data`文件夹下。 
+如果需要重新生成数据可以依次运行以下命令：
 
 dataset 目录下运行
 
@@ -20,7 +19,7 @@ dataset 目录下运行
 python gen_case.py
 python split_cases.py
 ```
-根目录运行（时间较久）
+根目录运行
 ```shell
 python gen_data.py
 ```
@@ -58,4 +57,4 @@ python evaluate.py \
 --max_length 4096
 ```
 
-指标计算与绘图，运行 result_statistic.ipynb 中所有命令
+指标计算与绘图：运行 result_statistic.ipynb 中所有命令
