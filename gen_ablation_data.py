@@ -70,7 +70,7 @@ print("format v3")
 print(medium[0]["input"])
 print(medium[0]["output"])
 
-print(v1_maxlen, v2_maxlen)
+print(v1_maxlen, v2_maxlen) # 463 672
 
 with open('dataset/train/format_v1.json', 'w') as f:
     json.dump(format_v1, f)

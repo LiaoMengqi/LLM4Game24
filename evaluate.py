@@ -17,7 +17,7 @@ def process_data():
     inputs = []
     for case in data:
         case = [str(e) for e in case]
-        inputs.append(prompt_template.format(system_prompt=system_prompt, user_prompt=" ".join(case) + '/n'))
+        inputs.append(prompt_template.format(system_prompt=system_prompt, user_prompt=" ".join(case) + '\n'))
     return inputs
 
 
@@ -43,7 +43,7 @@ def batch_generate(model, tokenizer, input_texts, batch_size=8):
             output_ids = model.generate(
                 inputs.input_ids,
                 attention_mask=inputs.attention_mask,
-                max_length=args.max_length,
+                max_new_tokens=args.max_length,
                 num_return_sequences=1,
                 do_sample=False,
                 pad_token_id=tokenizer.pad_token_id
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=str, default="/root/autodl-tmp/")
-    parser.add_argument("--checkpoint_id", type=str, default="short/checkpoint-800")
+    parser.add_argument("--checkpoint_id", type=str, default="short/checkpoint-1000")
     parser.add_argument("--data", type=str, default="./dataset/test_cases.json")
     parser.add_argument("--save_file", type=str, default="short.json")
     parser.add_argument("--batch_size", type=int, default=8)
