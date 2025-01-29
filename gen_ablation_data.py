@@ -1,18 +1,23 @@
 import copy
 import json
 
+from tqdm import tqdm
 from transformers import AutoTokenizer
 
 model_name = "d:/model/Qwen/Qwen2___5-0___5B-Instruct/"
 # model = AutoModelForCausalLM.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-with open('dataset/medium_data.json', 'r') as f:
+with open('dataset/train/train.json', 'r') as f:
     medium = json.load(f)
 
 format_v2 = []
 v2_maxlen = 0
+
+bar = tqdm(total=len(medium), desc="V2 Re-Formatting")
+
 for item in medium:
+    bar.update(1)
     item = copy.deepcopy(item)
     output = item['output'].split("\n")
     new_output = ""
@@ -36,7 +41,9 @@ for item in medium:
 
 format_v1 = []
 v1_maxlen = 0
+bar = tqdm(total=len(format_v2), desc="V1 Re-Formatting")
 for item in format_v2:
+    bar.update(1)
     item = copy.deepcopy(item)
     output = item['output'].split("\n")
     new_output = ""
@@ -65,8 +72,8 @@ print(medium[0]["output"])
 
 print(v1_maxlen, v2_maxlen)
 
-with open('dataset/format_v1.json', 'w') as f:
+with open('dataset/train/format_v1.json', 'w') as f:
     json.dump(format_v1, f)
 
-with open('dataset/format_v2.json', 'w') as f:
+with open('dataset/train/format_v2.json', 'w') as f:
     json.dump(format_v2, f)
