@@ -7,12 +7,17 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def process_data():
     prompt_template = '<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{user_prompt}<|im_end|>\n<|im_start|>assistant\n'
+    system_prompt=("Play 24 game. "
+                   "Given four numbers, determine if it's possible to reach 24 through basic arithmetic operations."
+                   " Output the reasoning steps, one step per line. On the last line, output the expression, for example, "
+                   "input: '10 1 12 3', "
+                   "the last line should output: 'reach 24! expression: ((12 + 3) + (10 - 1))'.")
     with open(args.data, "r") as f:
         data = json.load(f)
     inputs = []
     for case in data:
         case = [str(e) for e in case]
-        inputs.append(prompt_template.format(system_prompt="play 24 game", user_prompt=" ".join(case) + '/n'))
+        inputs.append(prompt_template.format(system_prompt=system_prompt, user_prompt=" ".join(case) + '/n'))
     return inputs
 
 

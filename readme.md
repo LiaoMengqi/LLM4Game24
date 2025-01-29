@@ -1,7 +1,11 @@
+*最新消息*
+- [2025/01/29] 优化案例生成与微调数据生成算法效率，训练数据的输入数字也会随机打乱，增强数据多样性。
+
 ## 简介
 
+
 这个 repo 是一个微调大模型解决 24 点游戏的 toy project ，仅供大家了解大模型长 CoT 推理微调。
-我们还实现了 Deep seek R1-Zero 的强化学习 pipeline，进一步提高了模型的能力。
+我们还实现了 Deep seek R1-Zero 的强化学习 pipeline，进一步提高了模型进行24点游戏的能力。
 
 24 点游戏是指给定四个 1-13 的数字，找到一种四则基本运算（加减乘除）的组合能将四个数字的运算结果达到24。
 比如给定数字 4 2 6 3，可以通过 (4 x 3) + (2 x 6) 得到 24。
@@ -30,13 +34,13 @@ python gen_abation_data.py
 
 微调命令
 ```shell
-python stf.py \
---dataset ./dataset/short_data.json \
+CUDA_VISIBLE_DEVICES=0 python stf.py \
+--dataset ./dataset/train/short.json \
 --output_dir short_v3 \
---max_steps 1500 \
+--max_steps 1000 \
 --batch_size 8 \
 --accumulation_steps 4 \
---max_len 1400
+--max_len 1250
 ```
 评估命令，进行生成，生成结果保存在 result 目录下
 ```shell

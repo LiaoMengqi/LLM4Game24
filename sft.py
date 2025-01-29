@@ -13,7 +13,11 @@ PaddingID = -100
 def preprocess_function(examples):
     max_len = args.max_len
     prompt_template = '<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{user_prompt}<|im_end|>\n<|im_start|>assistant\n'
-    system_prompt = "play 24 game"
+    system_prompt = ("Play 24 game. "
+                     "Given four numbers, determine if it's possible to reach 24 through basic arithmetic operations."
+                     " Output the reasoning steps, one step per line. On the last line, output the expression, for example, "
+                     "input: '10 1 12 3', "
+                     "the last line should output: 'reach 24! expression: ((12 + 3) + (10 - 1))'.")
     model_inputs = {'input_ids': [], 'labels': [], 'input_len': [], 'output_len': []}
     for i in range(len(examples['input'])):
         prompt = prompt_template.format(
@@ -48,16 +52,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="dataset/short_data.json")
+    parser.add_argument("--dataset", type=str, default="dataset/train/short.json")
     parser.add_argument("--output_dir", type=str, default="short")
     parser.add_argument("--max_steps", type=int, default=1000)
     parser.add_argument("--eval_steps", type=int, default=100)
     parser.add_argument("--max_len", type=int, default=1400)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--accumulation_steps", type=int, default=8)
+    parser.add_argument("--model", type=str, default='Qwen/Qwen2.5-0.5B')
     args = parser.parse_args()
 
-    model_name = "/root/autodl-tmp/model/Qwen/Qwen2___5-0___5B-Instruct/"
+    model_name = args.model
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     dataset = load_dataset("json", data_files={"train": args.dataset})
@@ -72,7 +77,7 @@ if __name__ == "__main__":
 
     model = AutoModelForCausalLM.from_pretrained(model_name)
     training_args = TrainingArguments(
-        output_dir="/root/autodl-tmp/" + args.output_dir,  # 检查点保存路径
+        output_dir="./checkpoint/" + args.output_dir,  # 检查点保存路径
         max_steps=args.max_steps,  # 最大训练步数
         eval_steps=args.eval_steps,  # 每 100 步进行评估
         evaluation_strategy="steps",  # 评估策略：按步数评估
