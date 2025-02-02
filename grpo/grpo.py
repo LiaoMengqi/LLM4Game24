@@ -337,7 +337,7 @@ class GRPOTrainer4Game24:
                 self.std = std
             else:
                 self.std = self.std * self.momentum + std * (1 - self.momentum)
-            self.momentum = min(self.args.max_momentum, self.momentum + 0.1)  # 开始更新快，后续更新慢
+            self.momentum = min(self.args.max_momentum, self.momentum + 0.1)
             return (reward - self.mean) / (self.std + 1e-4)
 
         class packed_experience:

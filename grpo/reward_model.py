@@ -24,8 +24,8 @@ class RewardModel4Game24(nn.Module):
                  lambda_oc: float = 0.08,
                  lambda_pr: float = 0.8,
                  lambda_l: float = 0.12,
-                 length_threshold: int = 20,
-                 middle_offset: int = 10,
+                 length_threshold: int = 4,  # 最优路径
+                 middle_offset: int = 20,
                  steepness: float = 0.2):
         super().__init__()
         self.lambda_pr = lambda_pr  # 步骤正确率
@@ -125,7 +125,7 @@ class RewardModel4Game24(nn.Module):
                     outcome_reward = 1
                 else:
                     error_lines += 1
-                    outcome_reward = 0.5
+                    outcome_reward = 0.35
                 continue
             else:
                 error_lines += 1
@@ -172,4 +172,4 @@ if __name__ == '__main__':
     rm = RewardModel4Game24()
     rw, cr = rm.forward(result, cases)
     print((rw - torch.mean(rw)) / torch.std(rw))
-    print(cr.sum()/6)
+    print(cr.sum() / 6)
