@@ -53,6 +53,9 @@ def build_tree_from_logs(log_lines: List[str]) -> LogNode:
                 popped.closed = True
 
         else:
+            # if 'left:' not in line:
+            #     node = LogNode(','.join(line.split(" ")))
+            # else:
             node = LogNode(line)
             node.parent = stack[-1]
             stack[-1].children.append(node)
@@ -229,7 +232,7 @@ def demo():
     ]
 
     # 删除后输出结果
-    compressed = compress_search_logs(logs, 9)
+    compressed = compress_search_logs(logs, 20)
     # print(f"\nAfter delete, want <= {max_lines} lines, actual = {len(compressed)} lines:\n")
     for line in compressed:
         print("   ", line)

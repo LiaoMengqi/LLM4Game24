@@ -52,7 +52,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="dataset/train/short.json")
+    parser.add_argument("--dataset", type=str, default="./dataset/train/train.json")
     parser.add_argument("--output_dir", type=str, default="short")
     parser.add_argument("--max_steps", type=int, default=1000)
     parser.add_argument("--eval_steps", type=int, default=100)
@@ -84,6 +84,9 @@ if __name__ == "__main__":
         save_strategy="steps",  # 保存策略：按步数保存
         save_steps=args.eval_steps,
         save_total_limit=1,
+        load_best_model_at_end=True,
+        save_safetensors=True,
+        save_only_model=True,
         metric_for_best_model="loss",  # 用验证集 loss 作为最优模型的指标
         greater_is_better=False,
         weight_decay=0.01,
@@ -112,11 +115,3 @@ if __name__ == "__main__":
 
     # 开始训练
     trainer.train()
-
-    # 保存模型到本地
-    # trainer.save_model("./llama-finetuned")
-
-    # 加载微调后的模型
-    # from transformers import AutoModelForCausalLM
-
-    # finetuned_model = AutoModelForCausalLM.from_pretrained("./llama-finetuned")

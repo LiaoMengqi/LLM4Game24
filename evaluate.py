@@ -7,11 +7,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def process_data():
     prompt_template = '<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{user_prompt}<|im_end|>\n<|im_start|>assistant\n'
-    system_prompt=("Play 24 game. "
-                   "Given four numbers, determine if it's possible to reach 24 through basic arithmetic operations."
-                   " Output the reasoning steps, one step per line. On the last line, output the expression, for example, "
-                   "input: '10 1 12 3', "
-                   "the last line should output: 'reach 24! expression: ((12 + 3) + (10 - 1))'.")
+    system_prompt = ("Play 24 game. "
+                     "Given four numbers, determine if it's possible to reach 24 through basic arithmetic operations."
+                     " Output the reasoning steps, one step per line. On the last line, output the expression, for example, "
+                     "input: '10 1 12 3', "
+                     "the last line should output: 'reach 24! expression: ((12 + 3) + (10 - 1))'.")
     with open(args.data, "r") as f:
         data = json.load(f)
     inputs = []
@@ -62,10 +62,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path", type=str, default="/root/autodl-tmp/")
-    parser.add_argument("--checkpoint_id", type=str, default="short/checkpoint-1000")
+    parser.add_argument("--path", type=str, default="./checkpoint/")
+    parser.add_argument("--checkpoint_id", type=str, default=None, required=True)
+    parser.add_argument("--tokenizer_path", type=str, default=None)
     parser.add_argument("--data", type=str, default="./dataset/test_cases.json")
-    parser.add_argument("--save_file", type=str, default="short.json")
+    parser.add_argument("--save_file", type=str, default="result.json")
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--max_length", type=int, default=4096)
     args = parser.parse_args()
@@ -77,7 +78,11 @@ if __name__ == "__main__":
     print(f"Using device: {device}")
     checkpoint_dir = args.path + args.checkpoint_id
     model = AutoModelForCausalLM.from_pretrained(checkpoint_dir).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
+    if args.tokenizer_path is not None:
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
+    # tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
     tokenizer.padding_side = "left"
 
     # 设置为评估模式
@@ -96,5 +101,5 @@ if __name__ == "__main__":
     # pbar.update(1)
 
     # 保存结果
-    with open("results/" + args.save_file, "w") as f:
+    with open("./results/" + args.save_file, "w") as f:
         json.dump(all_results, f)
