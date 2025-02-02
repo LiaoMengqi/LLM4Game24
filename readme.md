@@ -1,14 +1,14 @@
 *最新消息*
 - [2025/02/02] 上传 DeepSeek R1 Zero 强化学习 pipeline 代码，包含 GRPO 和基于规则的奖励模型的实现。
 - [2025/01/29] 优化案例生成与微调数据生成算法效率，训练数据的输入数字也会随机打乱，增强数据多样性。更换 system prompt， 用于之后强化学习的训练。
-新增混合数据训练，更新新版微调实验报告。
+新增混合数据微调，更新新版微调实验报告。
 - [2025/01/26] 上传 SFT 代码与实验报告。
 
 ## 简介
 
 
 这个仓库是在 *解决 24 点游戏* 的背景下的大模型 Long CoT 微调与强化学习的 toy project，
-旨在帮助大家了解大模型在长链推理（CoT）场景下的微调方法与强化学习的实践。
+旨在为大家提供大模型 Long CoT 微调与强化学习的入门实践。
 
 **24 点游戏简介**：  
 24 点游戏的目标是给定四个 1-13 的数字，通过四则运算（加、减、乘、除）的组合，使得计算结果等于 24。例如，给定数字 `4, 2, 6, 3`，可以通过 `(4 × 3) + (2 × 6)` 得到结果 24。
@@ -21,6 +21,8 @@
 
 此项目仅供学习和参考之用，欢迎大家关注后续更新！
 
+**未来计划**：
+- 实现 DPO 进行偏好学习。 
 
 ## 微调数据数据生成
 
@@ -49,7 +51,7 @@ CUDA_VISIBLE_DEVICES=0 python stf.py \
 --accumulation_steps 4 \
 --max_len 1250
 ```
-评估命令，进行生成，生成结果保存在 result 目录下
+评估命令，生成推理步骤与结果，生成结果保存在 `./result` 目录下
 ```shell
 CUDA_VISIBLE_DEVICES=0 python evaluate.py \
 --path /root/autodl-tmp/ \
@@ -59,6 +61,37 @@ CUDA_VISIBLE_DEVICES=0 python evaluate.py \
 --max_length 4096
 ```
 
-指标计算与绘图：运行 result_statistic.ipynb 中所有命令
+`result_statistic.ipynb` 中的代码根据生成的结果指标计算和绘图。
 
 ## 强化学习
+
+GRPO 强化学习用到了两个设备用于放 actor 模型和 reference 模型，
+如果只有一张卡可以设置 `CUDA_VISIBLE_DEVICES=0`,并设置 `--ref_device 0`。
+```shell
+CUDA_VISIBLE_DEVICES=0,1 python rl.py --lr 2e-6 \
+--beta 0.001 \
+--max_momentum 0 \
+--save_dir rl \
+--max_step 100 \
+--save_step 20 \
+--batch_size 12 \
+--group_size 8 \
+--mini_batch_size 4 \
+--lambda_oc 0.60 \
+--lambda_pr 0.30 \
+--lambda_l 0.1 \
+--top_p 0.9 \
+--temperature 0.7
+```
+
+参数说明：
+- `--beta` KL 惩罚系数。
+- `--max_momentum` 用于设置奖励的动态归一化，默认为 0，表示不使用动态归一化，DeepSeek Math 中没有使用动态归一化。
+- `--batch_size` 是每次迭代用到的实例数量。
+- `--group_size` 是 GRPO 的组大小，即对于每个实例生成的样本数量。
+- `--mini_batch_size` 是进行策略更新时的批量大小，影响显存占用。
+- `--lambda_oc` 奖励模型对于结果奖励的权重。
+- `--lambda_pr` 奖励模型对于过程正确性奖励的权重。
+- `--lambda_l` 奖励模型对于长度奖励的权重。
+- `--top_p` 是对生成的候选答案进行采样的 top_p 值，默认为 0.9。
+- `--temperature` 是对生成的候选答案进行采样的 temperature 值，默认为 0.7。
