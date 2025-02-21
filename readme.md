@@ -94,3 +94,11 @@ Parameter Descriptions:
 - `--lambda_l`: Weight of the length reward in the reward model.  
 - `--top_p`: Top-p value for sampling candidate answers, default is 0.9.  
 - `--temperature`: Temperature value for sampling candidate answers, default is 0.7.
+
+## Acknowledgments
+
+This project makes use of the following open-source libraries:
+
+- [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF)
+
+We are grateful to the authors and maintainers of this project for their amazing contributions to the open-source community.
