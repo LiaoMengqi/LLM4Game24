@@ -121,11 +121,11 @@ class RewardModel4Game24(nn.Module):
                     error_lines += 1
                 case = sorted([int(i) for i in start.split(' ')])
                 numbers = sorted(numbers)
-                if flag and numbers == case:  # 数字不匹配
+                if flag and numbers == case:
                     outcome_reward = 1
-                else:
+                else: # 数字不匹配
                     error_lines += 1
-                    outcome_reward = 0.35
+                    outcome_reward = 0
                 continue
             else:
                 error_lines += 1

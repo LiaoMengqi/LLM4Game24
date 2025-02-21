@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from transformers import get_scheduler
 
 from .reward_model import RewardModel4Game24
 
@@ -16,6 +17,28 @@ def to(tensor: Union[torch.Tensor, list[torch.Tensor]], device):
     if isinstance(tensor, list):
         return [to(t, device) for t in tensor]
     return tensor.to(device) if isinstance(tensor, torch.Tensor) else tensor
+
+
+class TemperatureScheduler:
+    """
+    Temperature Exponential Decay
+    """
+
+    def __init__(self,
+                 init_temperature: float,
+                 final_temperature: float,
+                 num_steps: int):
+        self.init_temperature = init_temperature
+        self.final_temperature = final_temperature
+        self.num_steps = num_steps
+        self.current_temperature = init_temperature
+
+    def step(self):
+        self.current_temperature = self.current_temperature * ((self.final_temperature / self.init_temperature) ** (
+                1 / self.num_steps))
+
+    def get_current_temperature(self):
+        return self.current_temperature
 
 
 @dataclass
@@ -70,7 +93,7 @@ class GRPOActor(nn.Module):
             "eos_token_id": kwargs.get("eos_token_id"),
             "pad_token_id": kwargs.get("pad_token_id"),
             "min_new_tokens": kwargs.get("min_new_tokens", 1),
-            "max_new_tokens": kwargs.get("max_new_tokens", 2048),
+            "max_new_tokens": kwargs.get("max_new_tokens", 1024),
         }
         sequences = self.model.generate(**generate_args)
 
@@ -81,6 +104,10 @@ class GRPOActor(nn.Module):
         return self.process_sequences(sequences, input_ids.size(1), eos_token_id, pad_token_id)
 
     def process_sequences(self, sequences: torch.Tensor, input_len, eos_token_id, pad_token_id):
+        """
+        Adjust from OpenRLHF
+        https://github.com/OpenRLHF/OpenRLHF
+        """
         attention_mask = (sequences.ne(eos_token_id) & sequences.ne(pad_token_id)).to(dtype=torch.long)
         seq_length = attention_mask.size(1)
 
@@ -161,6 +188,18 @@ class GRPOTrainer4Game24:
         self.momentum = 0
         self.mean = None
         self.std = None
+        self.scheduler = get_scheduler(
+            'cosine_with_min_lr',
+            optimizer=self.optimizer,
+            num_warmup_steps=int(0.1 * args.max_step),
+            num_training_steps=args.max_step,
+            scheduler_specific_kwargs={'min_lr': 1e-7}
+        )
+        self.temperature_scheduler: TemperatureScheduler = TemperatureScheduler(
+            self.args.temperature,
+            self.args.final_temperature,
+            self.args.max_step
+        )
 
     @torch.no_grad()
     def make_experience(self, samples: Samples) -> Experience:
@@ -198,6 +237,7 @@ class GRPOTrainer4Game24:
             "response_length": samples.response_length,
             "total_length": samples.total_length,
             "num_actions": num_actions,
+            "sentence": response_sentences
         }
         # reset model state
         self.actor.train()
@@ -221,7 +261,7 @@ class GRPOTrainer4Game24:
         """
         self.reference_model = self._clone_model(self.actor, self.ref_device)  # π_ref ← π_θ
 
-        loss_list, acc_list = [], []
+        loss_list, acc_list, sentences = [], [], []
         tqdm_bar = tqdm(total=self.args.max_step)
         step = 1
         for epoch in range(self.args.max_epoch):
@@ -237,6 +277,7 @@ class GRPOTrainer4Game24:
                     samples.case = batch['cases'][i]
                     experiences.append(self.make_experience(samples).to_device("cpu"))
                     correct += experiences[-1].info["correct"]
+                    sentences.append(experiences[-1].info["sentence"])
 
                 # Perform GRPO updates
                 for grpo_iteration in range(self.args.grpo_iterations):
@@ -252,10 +293,12 @@ class GRPOTrainer4Game24:
                     self.actor.model.save_pretrained(
                         f"./checkpoint/{self.args.save_dir}_{(step) // self.args.save_step}/")
                 step += 1
+                self.scheduler.step()
+                self.temperature_scheduler.step()
             if step > self.args.max_step:
                 break
 
-        return loss_list, acc_list
+        return loss_list, acc_list, sentences
 
     def _clone_model(self, model, device="cpu"):
         """
@@ -284,7 +327,7 @@ class GRPOTrainer4Game24:
                                                                            num_return_sequences=self.args.group_size,
                                                                            do_sample=True,
                                                                            top_p=self.args.top_p,
-                                                                           temperature=self.args.temperature,
+                                                                           temperature=self.temperature_scheduler.get_current_temperature(),
                                                                            attention_mask=model_input.attention_mask,
                                                                            pad_token_id=self.tokenizer.pad_token_id,
                                                                            eos_token_id=self.tokenizer.eos_token_id
@@ -314,6 +357,10 @@ class GRPOTrainer4Game24:
                 action_mask: Optional[torch.Tensor] = None,
                 use_kl_estimator_k3: bool = False,
         ) -> torch.Tensor:
+            """
+            From OpenRLHF
+            https://github.com/OpenRLHF/OpenRLHF
+            """
 
             log_ratio = log_probs.float() - log_probs_base.float()
             if action_mask is not None:
@@ -394,4 +441,5 @@ class GRPOTrainer4Game24:
                 group_loss.backward()
                 total_loss += group_loss.item()
         self.optimizer.step()
+
         return total_loss

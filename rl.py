@@ -69,7 +69,8 @@ if __name__ == "__main__":
     parser.add_argument("--save_dir", type=str, default='rl')
     parser.add_argument("--max_momentum", type=float, default=0.99)
     parser.add_argument("--top_p", type=float, default=0.8)
-    parser.add_argument("--temperature", type=float, default=0.8)
+    parser.add_argument("--temperature", type=float, default=1.3)
+    parser.add_argument("--final_temperature", type=float, default=0.9)
 
     args = parser.parse_args()
 
@@ -92,9 +93,9 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         args=args
     )
-    loss_list, acc_list = trainer.train(dataloader)
-    print(loss_list)
+    loss_list, acc_list, sentence = trainer.train(dataloader)
+    # print(loss_list)
     import json
 
     with open(f'./results/rl_{args.save_dir}_info.json', 'w') as f:
-        json.dump({'loss_list': loss_list, 'acc_list': acc_list}, f)
+        json.dump({'loss_list': loss_list, 'acc_list': acc_list, 'samples': sentence}, f)
