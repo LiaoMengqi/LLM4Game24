@@ -50,7 +50,7 @@ def preprocess_function(examples):
 
 if __name__ == "__main__":
     import argparse
-
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="./dataset/train/train.json")
     parser.add_argument("--output_dir", type=str, default="short")
@@ -61,6 +61,9 @@ if __name__ == "__main__":
     parser.add_argument("--accumulation_steps", type=int, default=8)
     parser.add_argument("--model", type=str, default='Qwen/Qwen2.5-0.5B')
     args = parser.parse_args()
+    
+    log_dir = "./logs"
+    os.makedirs(log_dir, exist_ok=True)
 
     model_name = args.model
     tokenizer = AutoTokenizer.from_pretrained(model_name)
